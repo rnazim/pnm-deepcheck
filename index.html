@@ -451,6 +451,7 @@ let sources=[
  {id:'internal',nama:'Database kasus internal PNM',sub:'Riwayat pembiayaan & watchlist',logo:'db',lc:'b',metode:'Internal secured API',mtag:'Internal secured API / database',mt:'b',cakupan:'Catatan internal terverifikasi (role-based access, audit trail)',status:'ok',note:'Demo',sync:'30 Jul 2026 09:05',freq:'Real-time',pola:1},
  {id:'putusan',nama:'Direktori putusan / perkara publik',sub:'Sumber perkara pengadilan',logo:'scale',lc:'b',metode:'Official website / licensed connector',mtag:'Official website / licensed connector',mt:'b',cakupan:'Status perkara, nomor perkara, tanggal putusan (harus divalidasi)',status:'validate',note:'Konektor',sync:'29 Jul 2026 22:15',freq:'Harian',pola:2},
  {id:'sosmed',nama:'Data sosial media',sub:'Opsional',logo:'users',lc:'b',metode:'Web search / API penyedia',mtag:'Web search / API penyedia',mt:'b',cakupan:'Informasi publik di media sosial (akun, konten, tanggal)',status:'inactive',note:'Dalam konfigurasi',sync:'-',freq:'Per permintaan',pola:3},
+ {id:'getcontact',nama:'GetContact',sub:'Identifikasi nomor telepon',logo:'phone',lc:'b',metode:'API mitra / kerja sama resmi',mtag:'API mitra (perlu kerja sama)',mt:'a',cakupan:'Label nama dan tag kontak dari nomor telepon calon nasabah (indikasi, bukan data identitas resmi)',status:'approval',note:'Kajian legal & UU PDP',sync:'-',freq:'Per permintaan',pola:1},
 ];
 const ST={ok:['Terhubung','g'],approval:['Perlu persetujuan','a'],validate:['Perlu validasi','a'],inactive:['Belum aktif','n'],sync:['Menyinkronkan','b']};
 let docs=[{n:'KTP',f:'IMG_3273.jpg',ok:true,i:'id'},{n:'Kartu keluarga',f:'IMG_kk.jpg',ok:true,i:'file'},{n:'Foto rumah',f:'IMG_rumah.jpg',ok:true,i:'home'},{n:'Foto usaha',f:'IMG_usaha.jpg',ok:false,i:'shop'}];
@@ -458,7 +459,7 @@ let srcOn={news:true,perkara:true,regulator:true,internal:true};
 let logs=[
  {t:'30 Jul 2026 14:20',u:'R. Andi',r:'Reviewer CoE',a:'Menyelesaikan review',o:'SC-20260730-003'},
  {t:'30 Jul 2026 10:05',u:'Dian Rusdianti',r:'Admin CoE',a:'Menugaskan reviewer',o:'SC-20260730-003'},
- {t:'30 Jul 2026 09:41',u:'Sistem',r:'-',a:'Sinkronisasi sumber terjadwal',o:'6 sumber'},
+ {t:'30 Jul 2026 09:41',u:'Sistem',r:'-',a:'Sinkronisasi sumber terjadwal',o:'7 sumber'},
  {t:'30 Jul 2026 09:14',u:'Vika Rosari',r:'AO',a:'Mengirim data screening dari mobile',o:'SC-20260730-001'},
  {t:'30 Jul 2026 08:12',u:'S. Lestari',r:'Reviewer CoE',a:'Membuka evidence internal',o:'SC-20260730-004'},
 ];
@@ -654,6 +655,7 @@ $('#srcRows').onclick=e=>{const b=e.target.closest('[data-i]');if(!b)return;cons
   <div class="f"><label for="cfStat">Status koneksi</label><select id="cfStat">${Object.entries(ST).filter(([k])=>k!=='sync').map(([k,v])=>`<option value="${k}" ${s.status===k?'selected':''}>${v[0]}</option>`).join('')}</select></div>
   <div class="f" style="margin-top:12px"><label for="cfFreq">Frekuensi sinkronisasi</label><select id="cfFreq">${['Real-time','Per jam','Harian','Mingguan','Per permintaan'].map(x=>`<option ${s.freq===x?'selected':''}>${x}</option>`).join('')}</select></div>
   ${s.id==='slik'?`<div class="warn-box" style="margin-top:14px">${ic('alert',20)}<div>Status "Terhubung" untuk SLIK hanya boleh dipilih setelah persetujuan OJK dan perjanjian kerja sama berlaku.</div></div>`:''}
+  ${s.id==='getcontact'?`<div class="warn-box" style="margin-top:14px">${ic('alert',20)}<div>Label GetContact berasal dari cara pengguna lain menyimpan nomor tersebut, sehingga hanya menjadi indikasi pendukung. Akses memerlukan kerja sama resmi dengan penyedia, persetujuan calon nasabah, dan kepatuhan pada UU Pelindungan Data Pribadi.</div></div>`:''}
   <div class="row" style="justify-content:flex-end;margin-top:18px"><button class="btn" onclick="closeModal()">Batal</button><button class="btn pri" id="cfSave">Simpan konfigurasi</button></div>`);
   $('#cfSave').onclick=()=>{s.status=$('#cfStat').value;s.freq=$('#cfFreq').value;s.note=s.status==='ok'?'Frekuensi: '+s.freq:s.note;log('Mengubah konfigurasi sumber',s.nama);closeModal();toast('Konfigurasi disimpan');renderSources()};
 };
