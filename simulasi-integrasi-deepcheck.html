@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Simulasi Integrasi DeepCheck – MEKDI & MT 200</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#EEF2F8;--surface:#FFFFFF;--surface2:#F6F8FC;--text:#0F1E36;--muted:#5B6B85;--line:#DEE5F0;
+  --primary:#1D5FE0;--primary-bg:#E8F0FE;--navy:#0B2A5B;
+  --g:#178A4E;--g-bg:#E5F5EC;--a:#B86E00;--a-bg:#FFF3DC;--r:#C92F2F;--r-bg:#FDEBEB;--pu:#5A48C2;--pu-bg:#EEEBFC;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0B1322;--surface:#121D31;--surface2:#17243C;--text:#E5ECF6;--muted:#93A2BA;--line:#24334E;--primary:#4B83F0;--primary-bg:#18305A;--g:#4CC385;--g-bg:#13392A;--a:#F2B14A;--a-bg:#3A2C12;--r:#F07070;--r-bg:#40191C;--pu:#A79BF5;--pu-bg:#2A2450;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0B1322;--surface:#121D31;--surface2:#17243C;--text:#E5ECF6;--muted:#93A2BA;--line:#24334E;--primary:#4B83F0;--primary-bg:#18305A;--g:#4CC385;--g-bg:#13392A;--a:#F2B14A;--a-bg:#3A2C12;--r:#F07070;--r-bg:#40191C;--pu:#A79BF5;--pu-bg:#2A2450;color-scheme:dark}
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--text);font-family:"Plus Jakarta Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-size:14px;line-height:1.5}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--primary);outline-offset:2px}
+.wrap{max-width:1400px;margin:0 auto;padding:20px 20px 40px}
+header.top{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;margin-bottom:16px}
+h1{margin:0;font-size:26px;font-weight:800;letter-spacing:-.01em}
+.top p{margin:2px 0 0;color:var(--muted)}
+.controls{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:9px;overflow:hidden;background:var(--surface)}
+.seg button{border:0;background:none;padding:8px 13px;font-weight:600;font-size:13px;color:var(--muted)}
+.seg button.on{background:var(--primary);color:#fff}
+.seg.risk button.on[data-r="rendah"]{background:var(--g)}.seg.risk button.on[data-r="verifikasi"]{background:var(--a)}.seg.risk button.on[data-r="tinggi"]{background:var(--r)}
+.btn{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line);background:var(--surface);border-radius:9px;padding:8px 13px;font-weight:600;font-size:13px}
+.btn:hover{border-color:var(--primary);color:var(--primary)}
+.btn.pri{background:var(--primary);border-color:var(--primary);color:#fff}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.lbl{font-size:12px;color:var(--muted);font-weight:600}
+.layout{display:grid;grid-template-columns:1fr 380px;gap:18px;align-items:start}
+.stage{display:flex;gap:28px;justify-content:center;flex-wrap:wrap;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:24px 16px}
+.dev{display:flex;flex-direction:column;align-items:center;gap:10px}
+.dev h2{margin:0;font-size:18px;font-weight:800;color:var(--navy)}
+:root[data-theme="dark"] .dev h2{color:var(--text)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .dev h2{color:var(--text)}}
+.dev .cap{font-size:12px;color:var(--muted);max-width:330px;text-align:center}
+/* phones */
+.phone{width:330px;height:680px;border-radius:40px;background:#101826;padding:11px;position:relative;box-shadow:0 18px 40px rgba(10,25,50,.25)}
+.phone.android{border-radius:30px;padding:30px 10px 26px}
+.phone.android::before{content:"";position:absolute;top:12px;left:50%;transform:translateX(-50%);width:70px;height:5px;border-radius:3px;background:#3a4252}
+.phone.ios::before{content:"";position:absolute;top:18px;left:50%;transform:translateX(-50%);width:96px;height:26px;border-radius:14px;background:#101826;z-index:5}
+.screen{width:100%;height:100%;border-radius:30px;overflow:hidden;position:relative;background:#fff;color:#14233B}
+.android .screen{border-radius:10px}
+.scroll{position:absolute;inset:0;overflow-y:auto;overscroll-behavior:contain}
+.scroll::-webkit-scrollbar{width:0}
+.ptoast{position:absolute;left:10px;right:10px;top:44px;z-index:8;background:#0F1E36;color:#fff;border-radius:12px;padding:10px 12px;font-size:12px;box-shadow:0 8px 18px rgba(0,0,0,.3);animation:drop .3s ease}
+.ptoast b{display:block;font-size:13px}
+@keyframes drop{from{opacity:0;transform:translateY(-10px)}}
+/* MEKDI */
+.mk{background:#0E5DAA;min-height:100%;padding:16px 12px}
+.mk-h{color:#fff;padding:4px 6px 14px;font-size:15px;line-height:1.35}
+.mk-h b{font-size:16px;display:block}
+.mk-body{background:#fff;padding:10px}
+.mk-box{border:2px solid #C62A2A;padding:10px}
+.mk-lbl{font-size:14px;color:#222}
+.mk-amt{background:#E3E5EA;border-radius:6px;padding:10px 12px;margin:6px 0 10px;color:#555}
+.mk-card{border:1px solid #C9CED8;border-radius:8px;padding:10px 12px;font-size:13px}
+.mk-card span{display:block;color:#333}.mk-card b{display:block;margin-bottom:8px}
+.mk-btn{display:block;width:88%;margin:8px auto 0;border:1px solid #777;border-radius:18px;background:#fff;padding:6px;font-size:13px;position:relative;color:#222}
+.mk-btn:hover{background:#F2F5FA}
+.mk-btn .chip{position:absolute;right:8px;top:50%;transform:translateY(-50%);font-size:10px;font-weight:700;border-radius:8px;padding:1px 7px;color:#fff}
+.newb{position:absolute;left:-14px;top:-10px;background:#E01E1E;color:#fff;font-size:8px;font-weight:800;border-radius:50%;width:24px;height:24px;display:grid;place-items:center;transform:rotate(-15deg)}
+.mk-foot{border:2px solid #C62A2A;padding:8px;margin-top:8px}
+.mk-act{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:8px}
+.mk-act button{border:0;border-radius:6px;padding:7px 0;color:#fff;font-size:13px;font-weight:600}
+.mk-act button[aria-disabled="true"]{opacity:.45}
+/* MT200 */
+.mt-h{background:#0D3A63;color:#fff;padding:52px 16px 16px;display:flex;align-items:center;gap:10px;font-weight:700;letter-spacing:.02em;font-size:13px}
+.mt-h span{flex:1}
+.mt-body{padding:14px 14px 20px}
+.acc{margin-bottom:14px}
+.acc-h{width:100%;display:flex;justify-content:space-between;align-items:center;background:#0D3A63;color:#fff;border:0;border-radius:6px;padding:11px 12px;font-size:12px;font-weight:700;position:relative}
+.acc-s{margin-top:6px;border-radius:5px;padding:5px 9px;font-size:10px;display:flex;justify-content:space-between;align-items:center;color:#fff}
+.acc-c{font-size:9.5px;padding:8px 2px 0;color:#222}
+.acc-c .r{display:flex;justify-content:space-between;padding:1px 0}
+.acc-c b{display:block;margin:6px 0 2px;font-size:10px}
+.mt-run{width:100%;margin-top:8px;border:1px solid #0D3A63;color:#0D3A63;background:#fff;border-radius:6px;padding:7px;font-size:11px;font-weight:700}
+.mt-cta{width:100%;border:0;background:#0D3A63;color:#fff;border-radius:8px;padding:11px;font-weight:700;font-size:13px;margin-top:4px}
+.mt-cta[aria-disabled="true"]{opacity:.45}
+.mt-cta.ghost{background:#fff;color:#C92F2F;border:1px solid #C92F2F;margin-top:8px}
+/* DeepCheck screen */
+.dc{background:#F1F4F9;min-height:100%;color:#14233B}
+.dc-h{background:#0B2A5B;color:#fff;padding:46px 14px 14px;display:flex;align-items:center;gap:10px}
+.android .dc-h{padding-top:16px}
+.dc-h b{flex:1;font-size:16px}
+.dc-h button{background:none;border:0;color:#fff;padding:2px}
+.dc-h .rw{border:1px solid rgba(255,255,255,.55);border-radius:8px;padding:4px 9px;font-size:11px}
+.dc-b{padding:10px;display:flex;flex-direction:column;gap:9px}
+.c{background:#fff;border-radius:12px;padding:11px}
+.prof{display:flex;gap:10px;align-items:center}
+.avatar{width:42px;height:42px;border-radius:50%;background:#E3ECFB;color:#1D5FE0;display:grid;place-items:center;flex:none}
+.tag{display:inline-block;font-size:10px;font-weight:600;border-radius:5px;padding:2px 7px;margin-right:4px}
+.rk{border-radius:12px;padding:11px}
+.rk .hd{display:flex;align-items:center;gap:9px}
+.rk .ico{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;color:#fff;flex:none}
+.rk .hd b{flex:1;font-size:15px}
+.rk .pl{font-size:9px;font-weight:700;color:#fff;border-radius:5px;padding:3px 7px}
+.rk p{margin:6px 0 0;font-size:11px}
+.mock{display:flex;gap:7px;background:#FFF3DC;border-radius:10px;padding:8px 10px;font-size:10px}
+.fi{display:flex;gap:9px;padding:8px 0;border-bottom:1px solid #E6EBF3;font-size:11px;cursor:pointer}
+.fi:last-child{border:0}
+.fi svg{color:#1D5FE0;flex:none}
+.kvs{font-size:11px;background:#E9EFF9;border-radius:10px;padding:9px 11px}
+.kvs div{display:flex;justify-content:space-between;padding:2px 0}
+.dc-btns{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.dc-btns button{border-radius:9px;padding:9px 4px;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:5px}
+.b-out{background:#fff;border:1px solid #1D5FE0;color:#1D5FE0}
+.b-pri{background:#1D5FE0;border:1px solid #1D5FE0;color:#fff}
+.b-pri:disabled{opacity:.6;cursor:default}
+.load{padding:20px 16px}
+.load h3{margin:4px 0 4px;font-size:16px}
+.lrow{display:flex;align-items:center;gap:9px;padding:10px 0;border-bottom:1px solid #E6EBF3;font-size:12px}
+.lrow .st{margin-left:auto;font-size:10px;font-weight:700;border-radius:5px;padding:2px 7px}
+.spin{animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.done-ov{position:absolute;inset:0;background:rgba(255,255,255,.97);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px;z-index:7;animation:drop .3s}
+.done-ov .big{width:64px;height:64px;border-radius:50%;display:grid;place-items:center;color:#fff;margin-bottom:10px}
+.done-ov h3{margin:0 0 6px;font-size:18px;color:#14233B}
+.done-ov p{margin:0 0 4px;font-size:12px;color:#5B6B85}
+/* side panel */
+.panel{display:flex;flex-direction:column;gap:14px;position:sticky;top:14px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px}
+.card h3{margin:0 0 2px;font-size:16px}
+.card .sub{margin:0 0 12px;color:var(--muted);font-size:12px}
+.log{max-height:330px;overflow-y:auto;display:flex;flex-direction:column;gap:8px}
+.ev{border-left:3px solid var(--primary);background:var(--surface2);border-radius:0 8px 8px 0;padding:7px 10px;font-size:12px}
+.ev .who{font-weight:700;font-size:11px;color:var(--muted)}
+.ev code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11px;background:var(--primary-bg);color:var(--primary);border-radius:4px;padding:0 4px;word-break:break-all}
+.ev.g{border-color:var(--g)}.ev.a{border-color:var(--a)}.ev.r{border-color:var(--r)}
+.empty{color:var(--muted);font-size:12px;text-align:center;padding:14px}
+.rules{display:flex;flex-direction:column;gap:8px;font-size:12px}
+.rule{display:flex;gap:10px;align-items:flex-start;padding:8px;border-radius:9px}
+.rule.on{outline:2px solid currentColor}
+.rule i{width:10px;height:10px;border-radius:50%;flex:none;margin-top:4px}
+.rv{border:1px solid var(--line);border-radius:10px;padding:10px;margin-bottom:8px}
+.rv .row{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.pill{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;border-radius:6px;padding:2px 8px}
+.t-g{background:var(--g-bg);color:var(--g)}.t-a{background:var(--a-bg);color:var(--a)}.t-r{background:var(--r-bg);color:var(--r)}.t-b{background:var(--primary-bg);color:var(--primary)}
+/* modal */
+.ov{position:fixed;inset:0;background:rgba(8,18,38,.5);display:none;align-items:center;justify-content:center;z-index:50;padding:16px}
+.ov.show{display:flex}
+.modal{background:var(--surface);border-radius:14px;width:min(440px,100%);padding:20px;max-height:90vh;overflow:auto}
+.modal h3{margin:0 0 6px;font-size:17px}
+.modal p{margin:0 0 10px;color:var(--muted);font-size:13px}
+.modal textarea{width:100%;min-height:80px;border:1px solid var(--line);background:var(--surface2);border-radius:9px;padding:10px}
+.modal .err{color:var(--r);font-size:12px;display:none;margin-top:4px}
+.modal .acts{display:flex;justify-content:flex-end;gap:8px;margin-top:14px}
+.ph{height:170px;border-radius:10px;display:grid;place-items:center;background:var(--surface2);color:var(--muted);border:1px dashed var(--line);margin-bottom:6px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+@media (max-width:1100px){.layout{grid-template-columns:1fr}.panel{position:static}}
+@media (max-width:420px){.phone{width:300px;height:640px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div><h1>Simulasi integrasi DeepCheck</h1><p>Bagaimana DeepCheck tampil di MEKDI (Mekaar) dan MT 200 (ULaMM) saat proses persetujuan</p></div>
+    <div class="controls">
+      <div><div class="lbl">Aplikasi</div><div class="seg" id="segApp"><button data-a="both" class="on">Berdampingan</button><button data-a="mk">Mekaar – MEKDI</button><button data-a="mt">ULaMM – MT 200</button></div></div>
+      <div><div class="lbl">Skenario hasil DeepCheck</div><div class="seg risk" id="segRisk"><button data-r="rendah">Risiko rendah</button><button data-r="verifikasi">Perlu verifikasi</button><button data-r="tinggi" class="on">Risiko tinggi</button></div></div>
+      <div><div class="lbl">&nbsp;</div><div style="display:flex;gap:6px"><button class="btn" id="resetBtn">Ulangi simulasi</button><button class="btn" id="themeBtn" aria-label="Ganti tema">◐</button></div></div>
+    </div>
+  </header>
+
+  <div class="layout">
+    <section class="stage" id="stage">
+      <div class="dev" id="dev-mk"><h2>Mekaar – MEKDI</h2><div class="phone android"><div class="screen" id="scr-mk"></div></div><div class="cap">Tombol Deepcheck ditambahkan di layar persetujuan, sejajar dengan Lihat Foto Rumah dan KTP Penjamin.</div></div>
+      <div class="dev" id="dev-mt"><h2>ULaMM – MT 200</h2><div class="phone ios"><div class="screen" id="scr-mt"></div></div><div class="cap">DeepCheck menjadi satu bagian baru di Verifikasi Kredit, setelah Dukcapil, INI, dan SLIK OJK.</div></div>
+    </section>
+
+    <aside class="panel">
+      <div class="card"><h3>Aturan tindak lanjut</h3><p class="sub">Tombol persetujuan di aplikasi mengikuti hasil DeepCheck</p><div class="rules" id="rules"></div></div>
+      <div class="card" id="revCard"><h3>Simulasi reviewer CoE</h3><p class="sub">Kasus yang dikirim untuk review muncul di sini. Pilih keputusan reviewer.</p><div id="revList"></div></div>
+      <div class="card"><div style="display:flex;justify-content:space-between;align-items:center"><h3>Log integrasi</h3><button class="btn" id="clearLog" style="padding:4px 9px;font-size:12px">Bersihkan</button></div><p class="sub">Pertukaran data antara aplikasi dan DeepCheck</p><div class="log" id="log"></div></div>
+    </aside>
+  </div>
+</div>
+
+<div class="ov" id="ov" onclick="if(event.target===this)closeModal()"><div class="modal" id="modal" role="dialog" aria-modal="true"></div></div>
+
+<script>
+const $=s=>document.querySelector(s);
+const pad=n=>String(n).padStart(2,'0');
+const now=()=>{const d=new Date();return `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`};
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const P={
+ news:'<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 8h4v4H7zM14 8h3M14 12h3M7 16h10"/>',
+ scale:'<path d="M12 3v18M7 21h10M5 7h14M5 7l-3 7a3 3 0 0 0 6 0ZM19 7l-3 7a3 3 0 0 0 6 0Z"/>',
+ db:'<ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/>',
+ globe:'<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/>',
+ user:'<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>',
+ check:'<path d="m5 12 5 5L20 7"/>',alert:'<path d="M12 7v6M12 17h.01"/>',x:'<path d="M18 6 6 18M6 6l12 12"/>',
+ left:'<path d="m15 18-6-6 6-6"/>',right:'<path d="m9 18 6-6-6-6"/>',up:'<path d="m18 15-6-6-6 6"/>',down:'<path d="m6 9 6 6 6-6"/>',
+ file:'<path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9Z"/><path d="M14 3v6h6M8 13h8M8 17h6"/>',
+ send:'<path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/>',hist:'<path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5M12 7v5l3 2"/>',
+ fp:'<path d="M12 11v3a8 8 0 0 1-2 5.5M8 7.5A5 5 0 0 1 17 10v2a14 14 0 0 1-1 5M5 10a7 7 0 0 1 1.5-4.4M9 11a3 3 0 0 1 6 0v1"/>',
+ users:'<circle cx="9" cy="8" r="4"/><path d="M2 21a7 7 0 0 1 14 0M16 3.1a4 4 0 0 1 0 7.8M22 21a7 7 0 0 0-4-6.3"/>',
+ gear:'<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/>',
+ clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>'
+};
+const ic=(n,s=18,x='')=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ${x}>${P[n]}</svg>`;
+
+const RK={
+ rendah:{label:'Risiko rendah',tag:'Dapat diproses',col:'#178A4E',bg:'#E5F5EC',score:25,icon:'check',desc:'Tidak ditemukan informasi relevan dari sumber publik dan database internal yang perlu ditinjau lebih lanjut.',
+  f:[['g','Tidak ditemukan temuan relevan','Nama tidak ditemukan pada sumber yang diperiksa.'],['g','Tidak ditemukan temuan relevan','Tidak ada data perkara yang sesuai.'],['g','Tidak ditemukan temuan relevan','Tidak ada kecocokan pada data internal.']],id:'Sesuai',dec:'Dapat diproses'},
+ verifikasi:{label:'Perlu verifikasi',tag:'Kajian lebih lanjut',col:'#D08400',bg:'#FFF1D6',score:52,icon:'alert',desc:'Ditemukan beberapa informasi yang perlu diklarifikasi dan diverifikasi oleh petugas.',
+  f:[['a','Perlu verifikasi','Terdapat informasi dengan nama mirip, perlu validasi identitas dan konteks.'],['a','Status/sumber perlu ditinjau','Nama mirip, perlu verifikasi lebih lanjut.'],['a','Perlu verifikasi','Terdapat kesesuaian sebagian data, perlu peninjauan.']],id:'Perlu ditinjau',dec:'Belum ditetapkan'},
+ tinggi:{label:'Risiko tinggi',tag:'Review wajib',col:'#D42F2F',bg:'#FDE6E6',score:78,icon:'alert',desc:'Ditemukan beberapa informasi relevan dari sumber publik dan database internal yang perlu ditinjau lebih lanjut.',
+  f:[['r','Ada temuan relevan','Perlu validasi identitas dan konteks.'],['a','Status/sumber perlu ditinjau','Nama mirip, perlu verifikasi lebih lanjut.'],['r','Ada kecocokan potensial','Akses terbatas, perlu review oleh pihak berwenang.']],id:'Belum final',dec:'Belum ditetapkan'}
+};
+const LC={g:'#178A4E',a:'#D08400',r:'#D42F2F'};
+const APPS={
+ mk:{name:'MEKDI',nasabah:'Siti Rahmawati',nik:'3273********0001',prog:'Mekaar',unit:'Depok – Unit 02',approveLbl:'Approve',ref:'MKD'},
+ mt:{name:'MT 200',nasabah:'Budi Santoso',nik:'3273********0004',prog:'ULaMM',unit:'Bandung – Unit 05',approveLbl:'Ajukan ke komite',ref:'MT2'}
+};
+let risk='tinggi',view='both',S={},timers=[];
+function fresh(){return {screen:'main',ran:false,id:null,review:'none',decision:null,ev:false,clarified:false,final:null,open:{dukcapil:true,ini:true,slik:true,dc:true},slik:'proses',toast:null}}
+function reset(){timers.forEach(clearTimeout);timers=[];S={mk:fresh(),mt:fresh()};render('mk');render('mt');renderRules();renderRev();
+  later(()=>{S.mt.slik='ok';log('mt','SLIK OJK','MT 200','Pengecekan SLIK selesai: <code>kolektibilitas 1</code>','g');render('mt')},5000)}
+function later(f,ms){const t=setTimeout(f,ms);timers.push(t);return t}
+
+/* LOG */
+function log(app,from,to,msg,c=''){
+  const l=$('#log');l.querySelector('.empty')?.remove();
+  l.insertAdjacentHTML('afterbegin',`<div class="ev ${c}"><div class="who">${now()} • ${from} → ${to}${app?` • ${APPS[app].prog}`:''}</div>${msg}</div>`);
+}
+$('#clearLog').onclick=()=>{$('#log').innerHTML='<div class="empty">Belum ada aktivitas. Tekan tombol Deepcheck di salah satu aplikasi.</div>'};
+$('#clearLog').click();
+
+/* RULES */
+function renderRules(){
+  const R=[['rendah','#178A4E','Risiko rendah','Approve langsung tersedia. Hasil DeepCheck tersimpan sebagai lampiran pengajuan.'],
+   ['verifikasi','#D08400','Perlu verifikasi','Approve setelah petugas mengonfirmasi sudah klarifikasi, atau setelah review CoE.'],
+   ['tinggi','#D42F2F','Risiko tinggi','Approve dikunci sampai reviewer CoE memberi keputusan. Reject dan Revisi tetap tersedia.'],
+   ['none','#5B6B85','Belum dijalankan','Approve belum bisa ditekan. DeepCheck wajib dijalankan dahulu.']];
+  $('#rules').innerHTML=R.map(r=>`<div class="rule ${r[0]===risk?'on':''}" style="color:${r[1]};background:var(--surface2)"><i style="background:${r[1]}"></i><div style="color:var(--text)"><b>${r[2]}</b><br><span style="color:var(--muted)">${r[3]}</span></div></div>`).join('');
+}
+
+/* REVIEWER */
+function renderRev(){
+  const items=['mk','mt'].filter(a=>S[a].review!=='none');
+  $('#revList').innerHTML=items.length?items.map(a=>{const s=S[a];return `<div class="rv"><div style="display:flex;justify-content:space-between;gap:8px"><b>${APPS[a].nasabah}</b><span class="pill ${s.review==='pending'?'t-b':s.decision==='tolak'?'t-r':s.decision==='lapangan'?'t-a':'t-g'}">${s.review==='pending'?'Menunggu':s.decision==='tolak'?'Tidak direkomendasikan':s.decision==='lapangan'?'Verifikasi lapangan':'Lanjut proses'}</span></div><div style="font-size:12px;color:var(--muted)">${s.id} • ${APPS[a].prog} • ${RK[risk].label}</div>${s.review==='pending'?`<div class="row"><button class="btn" data-d="lanjut" data-a="${a}">Lanjut proses</button><button class="btn" data-d="lapangan" data-a="${a}">Verifikasi lapangan</button><button class="btn" data-d="tolak" data-a="${a}">Tidak direkomendasikan</button></div>`:''}</div>`}).join(''):'<div class="empty">Belum ada kasus yang dikirim untuk review.</div>';
+}
+$('#revList').onclick=e=>{const b=e.target.closest('[data-d]');if(!b)return;const a=b.dataset.a,s=S[a],d=b.dataset.d;
+  s.review='done';s.decision=d;
+  const txt={lanjut:'Lanjut proses',lapangan:'Perlu verifikasi lapangan',tolak:'Tidak direkomendasikan'}[d];
+  log(a,'Reviewer CoE','DeepCheck',`Keputusan review <code>${s.id}</code>: ${txt}`,d==='lanjut'?'g':d==='tolak'?'r':'a');
+  log(a,'DeepCheck',APPS[a].name,`Callback status review dikirim: <code>review_status=${d}</code>`);
+  ptoast(a,'Hasil review DeepCheck',`${APPS[a].nasabah}: ${txt}`);renderRev();render(a)};
+
+function ptoast(a,t,m){S[a].toast={t,m};render(a);later(()=>{S[a].toast=null;render(a)},3500)}
+
+/* DEEPCHECK FLOW */
+function runDC(a){
+  const s=S[a];s.screen='loading';s.id=`SC-20260730-${a==='mk'?'101':'102'}`;render(a);
+  log(a,APPS[a].name,'DeepCheck API',`<code>POST /v1/screening</code> {nik, nama, tgl_lahir, program:"${APPS[a].prog}", unit, consent:true}`);
+  log(a,'DeepCheck','Sumber',`Orchestrator mengirim permintaan ke 4 sumber untuk <code>${s.id}</code>`);
+  const steps=['news','perkara','reg','internal','match'];let i=0;
+  const tick=()=>{if(s.screen!=='loading')return;s.prog=i;render(a);i++;if(i<=steps.length)later(tick,550);else{
+    s.ran=true;s.screen='result';
+    const R=RK[risk];log(a,'DeepCheck',APPS[a].name,`Hasil diterima: <code>risk="${risk}" score=${R.score}</code>, ref <code>${s.id}</code>`,{rendah:'g',verifikasi:'a',tinggi:'r'}[risk]);
+    render(a);renderRules()}};
+  s.prog=0;tick();
+}
+function loadingScreen(a){
+  const s=S[a],L=[['news','Pemberitaan publik'],['scale','Informasi perkara publik'],['globe','Pengumuman regulator'],['db','Database internal PNM'],['fp','Pencocokan identitas']];
+  return `<div class="dc"><div class="dc-h"><b>DeepCheck</b></div><div class="load"><div style="font-size:11px;color:#5B6B85">${s.id}</div><h3>Memeriksa ${APPS[a].nasabah}</h3><div style="font-size:11px;color:#5B6B85;margin-bottom:8px">Data dikirim otomatis dari ${APPS[a].name}, petugas tidak perlu input ulang.</div>
+  ${L.map((l,i)=>{const st=i<s.prog?['Selesai','#E5F5EC','#178A4E']:i===s.prog?['Memeriksa','#E3ECFB','#1D5FE0']:['Menunggu','#EEF1F6','#5B6B85'];return `<div class="lrow">${ic(l[0],18)}<span>${l[1]}</span><span class="st" style="background:${st[1]};color:${st[2]}">${i===s.prog?ic('clock',10,'class="spin"')+' ':''}${st[0]}</span></div>`}).join('')}</div></div>`;
+}
+function dcScreen(a){
+  const s=S[a],R=RK[risk],A=APPS[a];
+  const items=[['news','Pemberitaan publik'],['scale','Data perkara publik'],['db','Database internal PNM']];
+  const sendLbl=s.review==='pending'?'Menunggu review':s.review==='done'?'Review selesai':'Kirim untuk review';
+  return `<div class="dc"><div class="dc-h"><button data-act="back" aria-label="Kembali ke ${A.name}">${ic('left',20)}</button><b>Hasil screening</b><button class="rw">Riwayat</button></div>
+  <div class="dc-b">
+   <div class="c prof"><div class="avatar">${ic('user',22)}</div><div><b style="font-size:13px">${A.nasabah}</b><div style="font-size:11px;color:#5B6B85">NIK: ${A.nik}</div><span class="tag" style="background:${a==='mt'?'#EEEBFC':'#E3ECFB'};color:${a==='mt'?'#5A48C2':'#1D5FE0'}">${A.prog}</span><span class="tag" style="background:#EEF1F6;color:#5B6B85">${A.unit}</span></div></div>
+   <div class="rk" style="background:${R.bg}"><div class="hd"><div class="ico" style="background:${R.col}">${ic(R.icon,20)}</div><b style="color:${R.col}">${R.label}</b><span class="pl" style="background:${R.col}">${R.tag}</span></div><p><b style="color:${R.col}">Skor ${R.score}.</b> ${R.desc}</p></div>
+   <div class="mock">${ic('alert',14)}<span>Hasil ini merupakan contoh data (mockup) untuk presentasi dan bukan data nasabah sebenarnya.</span></div>
+   <div class="c"><div style="display:flex;justify-content:space-between;font-size:12px"><b>Ringkasan temuan</b><button data-act="ev" style="border:0;background:none;color:#1D5FE0;font-weight:700;font-size:11px">${s.ev?'Tutup detail':'Lihat detail'}</button></div>
+   ${items.map((it,i)=>{const f=R.f[i];return `<div class="fi" data-act="ev">${ic(it[0],22)}<div style="flex:1"><b>${it[1]}</b><div style="color:${LC[f[0]]};font-weight:600">● ${f[1]}</div>${s.ev?`<div style="color:#5B6B85">${f[2]}</div>`:''}</div>${ic('right',14)}</div>`}).join('')}</div>
+   <div class="kvs"><div><span>${ic('fp',13)} Kecocokan identitas</span><b>${R.id}</b></div><div><span>${ic('file',13)} Sumber & tanggal</span><b>Tersedia (3 sumber)</b></div><div><span>${ic('users',13)} Keputusan</span><b style="color:${risk==='rendah'?'#178A4E':'#14233B'}">${s.decision?{lanjut:'Lanjut proses',lapangan:'Verifikasi lapangan',tolak:'Tidak direkomendasikan'}[s.decision]:R.dec}</b></div></div>
+   <div class="dc-btns"><button class="b-out" data-act="ev">${ic('file',14)}Lihat evidence</button><button class="b-pri" data-act="send" ${s.review!=='none'?'disabled':''}>${ic('send',14)}${sendLbl}</button></div>
+   <button data-act="back" style="border:0;background:none;color:#1D5FE0;font-weight:700;font-size:12px;padding:6px">${ic('left',12)} Kembali ke ${A.name}</button>
+  </div></div>`;
+}
+
+/* gating */
+function gate(a){
+  const s=S[a];
+  if(a==='mt'&&s.slik!=='ok')return{ok:false,why:'Pengecekan SLIK OJK masih berjalan.'};
+  if(!s.ran)return{ok:false,why:'DeepCheck belum dijalankan untuk nasabah ini.'};
+  if(s.decision==='tolak')return{ok:false,why:'Reviewer CoE tidak merekomendasikan pengajuan ini.'};
+  if(s.decision==='lapangan')return{ok:false,why:'Reviewer meminta verifikasi lapangan terlebih dahulu.'};
+  if(risk==='tinggi'&&s.decision!=='lanjut')return{ok:false,why:s.review==='pending'?'Menunggu keputusan reviewer CoE.':'Risiko tinggi wajib dikirim untuk review.'};
+  if(risk==='verifikasi'&&!s.clarified&&s.decision!=='lanjut')return{ok:true,confirm:true};
+  return{ok:true};
+}
+function dcChip(a){
+  const s=S[a];if(!s.ran)return'';const R=RK[risk];
+  const t=s.review==='pending'?'Review':s.decision==='lanjut'?'Lanjut':s.decision?'Ditahan':{rendah:'Rendah',verifikasi:'Verifikasi',tinggi:'Tinggi'}[risk];
+  const c=s.decision==='lanjut'?'#178A4E':s.decision?'#D42F2F':s.review==='pending'?'#1D5FE0':R.col;
+  return `<span class="chip" style="background:${c}">${t}</span>`;
+}
+
+/* MEKDI */
+function mkMain(){
+  const s=S.mk,g=gate('mk');
+  return `<div class="mk"><div class="mk-h"><b>Jkt</b>Coba coba</div><div class="mk-body">
+  <div class="mk-box"><div class="mk-lbl">Jumlah Pinjaman</div><div class="mk-amt">Rp. 2.000.000</div>
+   <div class="mk-card"><span>Siklus Pembiayaan</span><b>Tahap Satu</b><span>Kelas Unit</span><b>Madya</b><span>BWMP</span><b style="margin:0">Maks s/d Rp. 4.000.000</b></div>
+   <button class="mk-btn" data-act="foto-rumah">Lihat Foto Rumah</button>
+   <button class="mk-btn" data-act="foto-ktp">Lihat Foto KTP Penjamin</button>
+   <button class="mk-btn" data-act="dc"><span class="newb">NEW</span>Deepcheck${dcChip('mk')}</button>
+  </div>
+  <div class="mk-foot"><button class="mk-btn" style="width:100%;margin:0" data-act="fp4">Lihat FP4</button>
+   <div class="mk-act"><button style="background:#F0605A" data-act="reject">Reject</button><button style="background:#F3B83A" data-act="revisi">Revisi</button><button style="background:#0E5DAA;border:1px solid #fff" data-act="approve" ${g.ok?'':'aria-disabled="true"'}>Approve</button></div>
+   ${!g.ok?`<div style="font-size:10px;color:#C62A2A;margin-top:6px;text-align:center">${ic('alert',11)} ${g.why}</div>`:''}
+  </div></div></div>`;
+}
+/* MT200 */
+function mtMain(){
+  const s=S.mt,g=gate('mt'),R=RK[risk],o=s.open;
+  const acc=(k,title,status,body,isNew)=>`<div class="acc"><button class="acc-h" data-acc="${k}">${isNew?'<span class="newb" style="left:-8px;top:-12px">NEW</span>':''}${title}${ic(o[k]?'up':'down',14)}</button>${status}${o[k]?body:''}</div>`;
+  const ok=t=>`<div class="acc-s" style="background:#2EBF62">${t}${ic('check',12)}</div>`;
+  const rows=a=>a.map(x=>`<div class="r"><span>${x}</span><span>Sesuai</span></div>`).join('');
+  const dcStatus=!s.ran?(s.screen==='loading'?`<div class="acc-s" style="background:#1D5FE0">Pengecekan DeepCheck sedang dilakukan ${ic('clock',12,'class="spin"')}</div>`:`<div class="acc-s" style="background:#8A96A8">Belum dijalankan ${ic('clock',12)}</div>`):`<div class="acc-s" style="background:${s.decision==='lanjut'?'#2EBF62':R.col}">${s.decision==='lanjut'?'Tervalidasi – review lanjut proses':R.label+' • skor '+R.score}${ic(s.decision==='lanjut'||risk==='rendah'?'check':'alert',12)}</div>`;
+  const dcBody=`<div class="acc-c">${s.ran?`${R.f.map((f,i)=>`<div class="r"><span>${['Pemberitaan publik','Data perkara publik','Database internal PNM'][i]}</span><span style="color:${LC[f[0]]};font-weight:700">${f[1]}</span></div>`).join('')}<div class="r"><span>Status review</span><span>${s.review==='pending'?'Menunggu CoE':s.review==='done'?{lanjut:'Lanjut proses',lapangan:'Verifikasi lapangan',tolak:'Tidak direkomendasikan'}[s.decision]:'-'}</span></div><button class="mt-run" data-act="dc">Lihat hasil lengkap</button>`:`<div style="color:#5B6B85">Screening pemberitaan publik, perkara, regulator, dan database internal PNM.</div><button class="mt-run" data-act="dc" ${s.screen==='loading'?'disabled':''}>Jalankan DeepCheck</button>`}</div>`;
+  return `<div class="mt-h">${ic('left',16)}<span>VERIFIKASI KREDIT</span>${ic('gear',18)}</div><div class="mt-body">
+  ${acc('dukcapil','DUKCAPIL',ok('Tervalidasi'),`<div class="acc-c"><b>NASABAH</b>${rows(['Nomor Induk Kependudukan','Nama Lengkap','Tanggal Lahir'])}<b>PENJAMIN (NASABAH)</b>${rows(['Nomor Induk Kependudukan','Nama Lengkap','Tanggal Lahir'])}</div>`)}
+  ${acc('ini','INI',ok('Tervalidasi'),`<div class="acc-c">NIK TIDAK TERDAFTAR DI PEMBIAYAAN APAPUN</div>`)}
+  ${acc('slik','SLIK OJK',s.slik==='ok'?ok('Tervalidasi'):`<div class="acc-s" style="background:#D9C21A;color:#3a3200">Pengecekan SLIK OJK sedang dilakukan ${ic('clock',12,'class="spin"')}</div>`,s.slik==='ok'?`<div class="acc-c"><div class="r"><span>Kolektibilitas</span><span>Lancar (1)</span></div></div>`:'')}
+  ${acc('dc','DEEPCHECK',dcStatus,dcBody,true)}
+  <button class="mt-cta" data-act="approve" ${g.ok?'':'aria-disabled="true"'}>Ajukan ke komite</button>
+  ${!g.ok?`<div style="font-size:10px;color:#C62A2A;margin-top:6px;text-align:center">${ic('alert',11)} ${g.why}</div>`:''}
+  <button class="mt-cta ghost" data-act="reject">Tolak pengajuan</button>
+  </div>`;
+}
+function finalOv(a){
+  const f=S[a].final;const m={approve:['#178A4E','check',a==='mk'?'Pengajuan disetujui':'Diajukan ke komite'],reject:['#D42F2F','x','Pengajuan ditolak'],revisi:['#D08400','alert','Dikembalikan untuk revisi']}[f.type];
+  return `<div class="done-ov"><div class="big" style="background:${m[0]}">${ic(m[1],32)}</div><h3>${m[2]}</h3><p>${APPS[a].nasabah} • ${APPS[a].prog}</p><p>Ref ${APPS[a].ref}-20260730-0${a==='mk'?'41':'17'} • DeepCheck ${S[a].id||'tidak dijalankan'}</p>${f.note?`<p style="margin-top:6px">Catatan: “${esc(f.note)}”</p>`:''}<button class="btn" style="margin-top:14px" data-act="restart">Ulangi aplikasi ini</button></div>`;
+}
+function render(a){
+  const s=S[a],el=$('#scr-'+a);
+  const content=s.screen==='loading'&&a==='mk'?loadingScreen(a):s.screen==='loading'&&a==='mt'?loadingScreen(a):s.screen==='result'?dcScreen(a):(a==='mk'?mkMain():mtMain());
+  const st=el.querySelector('.scroll')?.scrollTop||0;
+  el.innerHTML=`<div class="scroll">${content}</div>${s.toast?`<div class="ptoast"><b>${s.toast.t}</b>${esc(s.toast.m)}</div>`:''}${s.final?finalOv(a):''}`;
+  if(s.screen===s._last)el.querySelector('.scroll').scrollTop=st;s._last=s.screen;
+}
+
+/* actions */
+['mk','mt'].forEach(a=>$('#scr-'+a).addEventListener('click',e=>{
+  const acc=e.target.closest('[data-acc]');if(acc){S[a].open[acc.dataset.acc]=!S[a].open[acc.dataset.acc];render(a);return}
+  const b=e.target.closest('[data-act]');if(!b||b.disabled)return;act(a,b.dataset.act)}));
+function act(a,k){
+  const s=S[a],A=APPS[a];
+  if(k==='dc'){if(s.ran){s.screen='result';log(a,A.name,'DeepCheck API',`<code>GET /v1/screening/${s.id}</code> membuka hasil tersimpan`);render(a)}else runDC(a)}
+  else if(k==='back'){s.screen='main';render(a)}
+  else if(k==='ev'){s.ev=!s.ev;if(s.ev)log(a,A.name,'DeepCheck API',`<code>GET /v1/screening/${s.id}/evidence</code> (akses tercatat di audit log)`);render(a)}
+  else if(k==='send'){s.review='pending';log(a,A.name,'DeepCheck API',`<code>POST /v1/screening/${s.id}/review</code> dikirim ke reviewer CoE`);ptoast(a,'Terkirim untuk review','Status akan diperbarui otomatis di '+A.name);renderRev();
+    if(view!=='both'||innerWidth<1100)$('#revCard').scrollIntoView({behavior:'smooth',block:'center'})}
+  else if(k==='foto-rumah'||k==='foto-ktp')openModal(`<h3>${k==='foto-rumah'?'Foto rumah':'Foto KTP penjamin'}</h3><div class="ph">${ic(k==='foto-rumah'?'file':'user',40)}</div><p>Gambar contoh untuk simulasi.</p><div class="acts"><button class="btn pri" onclick="closeModal()">Tutup</button></div>`)
+  else if(k==='fp4')openModal(`<h3>FP4</h3><p>Formulir pengajuan pembiayaan ${A.nasabah}</p><div style="font-size:13px;display:grid;grid-template-columns:140px 1fr;gap:6px"><span style="color:var(--muted)">Jumlah pinjaman</span><b>Rp 2.000.000</b><span style="color:var(--muted)">Tenor</span><b>50 minggu</b><span style="color:var(--muted)">Usaha</span><b>Warung kelontong</b><span style="color:var(--muted)">Hasil DeepCheck</span><b>${s.ran?RK[risk].label+' ('+s.id+')':'Belum dijalankan'}</b></div><div class="acts"><button class="btn pri" onclick="closeModal()">Tutup</button></div>`)
+  else if(k==='approve'){
+    const g=gate(a);
+    if(!g.ok){openModal(`<h3>${A.approveLbl} belum bisa dilakukan</h3><p>${g.why}</p>${!s.ran&&(a==='mk'||s.slik==='ok')?`<div class="acts"><button class="btn" onclick="closeModal()">Nanti</button><button class="btn pri" id="mRun">Jalankan DeepCheck</button></div>`:risk==='tinggi'&&s.ran&&s.review==='none'?`<div class="acts"><button class="btn" onclick="closeModal()">Tutup</button><button class="btn pri" id="mOpen">Buka hasil DeepCheck</button></div>`:`<div class="acts"><button class="btn pri" onclick="closeModal()">Mengerti</button></div>`}`);
+      log(a,A.name,'Aturan',`Tombol ${A.approveLbl} diblokir: ${g.why}`,'r');
+      const r=$('#mRun');if(r)r.onclick=()=>{closeModal();runDC(a)};const o=$('#mOpen');if(o)o.onclick=()=>{closeModal();s.screen='result';render(a)};return}
+    if(g.confirm){openModal(`<h3>Konfirmasi klarifikasi</h3><p>Hasil DeepCheck perlu verifikasi. Pastikan Anda sudah mengklarifikasi temuan ke calon nasabah.</p><label style="display:flex;gap:8px;font-size:13px"><input type="checkbox" id="mChk"> Saya sudah mengklarifikasi temuan dan identitas calon nasabah</label><textarea id="mNote" placeholder="Hasil klarifikasi (wajib)" style="margin-top:10px"></textarea><div class="err" id="mErr">Centang konfirmasi dan tulis hasil klarifikasi.</div><div class="acts"><button class="btn" onclick="closeModal()">Batal</button><button class="btn pri" id="mOk">${A.approveLbl}</button></div>`);
+      $('#mOk').onclick=()=>{const n=$('#mNote').value.trim();if(!$('#mChk').checked||!n){$('#mErr').style.display='block';return}s.clarified=true;closeModal();finish(a,'approve',n)};return}
+    finish(a,'approve');
+  }
+  else if(k==='reject'||k==='revisi'){openModal(`<h3>${k==='reject'?'Tolak pengajuan':'Kembalikan untuk revisi'}</h3><p>Tulis alasan. Alasan akan tersimpan di ${A.name}${s.ran?' dan ditautkan ke hasil DeepCheck':''}.</p><textarea id="mNote" placeholder="Alasan"></textarea><div class="err" id="mErr">Tulis alasan terlebih dahulu.</div><div class="acts"><button class="btn" onclick="closeModal()">Batal</button><button class="btn pri" id="mOk">${k==='reject'?'Tolak':'Kirim revisi'}</button></div>`);
+    $('#mNote').oninput=()=>$('#mErr').style.display='none';
+    $('#mOk').onclick=()=>{const n=$('#mNote').value.trim();if(!n){$('#mErr').style.display='block';return}closeModal();finish(a,k,n)}}
+  else if(k==='restart'){S[a]=fresh();if(a==='mt')later(()=>{S.mt.slik='ok';render('mt')},3000);render(a);renderRev()}
+}
+function finish(a,type,note){
+  const s=S[a],A=APPS[a];s.final={type,note};
+  const lbl={approve:A.approveLbl,reject:'Reject',revisi:'Revisi'}[type];
+  log(a,A.name,'DeepCheck API',`<code>PATCH /v1/screening/${s.id||'-'}/outcome</code> keputusan aplikasi: <code>${type}</code>`,type==='approve'?'g':type==='reject'?'r':'a');
+  log(a,A.name,'Audit log',`${lbl} oleh petugas tercatat bersama hasil DeepCheck`);
+  render(a);
+}
+
+/* modal */
+function openModal(h){$('#modal').innerHTML=h;$('#ov').classList.add('show');($('#modal').querySelector('textarea,input,.btn.pri')||{focus(){}}).focus()}
+function closeModal(){$('#ov').classList.remove('show')}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal()});
+
+/* controls */
+$('#segRisk').onclick=e=>{const b=e.target.closest('button');if(!b)return;risk=b.dataset.r;document.querySelectorAll('#segRisk button').forEach(x=>x.classList.toggle('on',x===b));log(null,'Simulasi','Semua',`Skenario diubah ke <code>${RK[risk].label}</code>, simulasi diulang`);reset()};
+$('#segApp').onclick=e=>{const b=e.target.closest('button');if(!b)return;view=b.dataset.a;document.querySelectorAll('#segApp button').forEach(x=>x.classList.toggle('on',x===b));$('#dev-mk').style.display=view==='mt'?'none':'';$('#dev-mt').style.display=view==='mk'?'none':''};
+$('#resetBtn').onclick=()=>{$('#clearLog').click();reset()};
+$('#themeBtn').onclick=()=>{const r=document.documentElement;const d=r.dataset.theme?r.dataset.theme==='dark':matchMedia('(prefers-color-scheme: dark)').matches;r.dataset.theme=d?'light':'dark'};
+reset();
+</script>
+</body>
+</html>
