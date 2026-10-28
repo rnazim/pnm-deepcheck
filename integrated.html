@@ -179,7 +179,7 @@ h1{margin:0;font-size:26px;font-weight:800;letter-spacing:-.01em}
 
     <aside class="panel">
       <div class="card"><h3>Aturan tindak lanjut</h3><p class="sub">Tombol persetujuan di aplikasi mengikuti hasil DeepCheck</p><div class="rules" id="rules"></div></div>
-      <div class="card" id="revCard"><h3>Simulasi reviewer CoE</h3><p class="sub">Kasus yang dikirim untuk review muncul di sini. Pilih keputusan reviewer.</p><div id="revList"></div></div>
+      <div class="card" id="revCard"><h3>Simulasi reviewer</h3><p class="sub">Kasus yang dikirim untuk review muncul di sini. Pilih keputusan reviewer.</p><div id="revList"></div></div>
       <div class="card"><div style="display:flex;justify-content:space-between;align-items:center"><h3>Log integrasi</h3><button class="btn" id="clearLog" style="padding:4px 9px;font-size:12px">Bersihkan</button></div><p class="sub">Pertukaran data antara aplikasi dan DeepCheck</p><div class="log" id="log"></div></div>
     </aside>
   </div>
@@ -239,8 +239,8 @@ $('#clearLog').click();
 /* RULES */
 function renderRules(){
   const R=[['rendah','#178A4E','Risiko rendah','Approve langsung tersedia. Hasil DeepCheck tersimpan sebagai lampiran pengajuan.'],
-   ['verifikasi','#D08400','Perlu verifikasi','Approve setelah petugas mengonfirmasi sudah klarifikasi, atau setelah review CoE.'],
-   ['tinggi','#D42F2F','Risiko tinggi','Approve dikunci sampai reviewer CoE memberi keputusan. Reject dan Revisi tetap tersedia.'],
+   ['verifikasi','#D08400','Perlu verifikasi','Approve setelah petugas mengonfirmasi sudah klarifikasi, atau setelah review.'],
+   ['tinggi','#D42F2F','Risiko tinggi','Approve dikunci sampai reviewer memberi keputusan. Reject dan Revisi tetap tersedia.'],
    ['none','#5B6B85','Belum dijalankan','Approve belum bisa ditekan. DeepCheck wajib dijalankan dahulu.']];
   $('#rules').innerHTML=R.map(r=>`<div class="rule ${r[0]===risk?'on':''}" style="color:${r[1]};background:var(--surface2)"><i style="background:${r[1]}"></i><div style="color:var(--text)"><b>${r[2]}</b><br><span style="color:var(--muted)">${r[3]}</span></div></div>`).join('');
 }
@@ -253,7 +253,7 @@ function renderRev(){
 $('#revList').onclick=e=>{const b=e.target.closest('[data-d]');if(!b)return;const a=b.dataset.a,s=S[a],d=b.dataset.d;
   s.review='done';s.decision=d;
   const txt={lanjut:'Lanjut proses',lapangan:'Perlu verifikasi lapangan',tolak:'Tidak direkomendasikan'}[d];
-  log(a,'Reviewer CoE','DeepCheck',`Keputusan review <code>${s.id}</code>: ${txt}`,d==='lanjut'?'g':d==='tolak'?'r':'a');
+  log(a,'Reviewer','DeepCheck',`Keputusan review <code>${s.id}</code>: ${txt}`,d==='lanjut'?'g':d==='tolak'?'r':'a');
   log(a,'DeepCheck',APPS[a].name,`Callback status review dikirim: <code>review_status=${d}</code>`);
   ptoast(a,'Hasil review DeepCheck',`${APPS[a].nasabah}: ${txt}`);renderRev();render(a)};
 
@@ -298,9 +298,9 @@ function gate(a){
   const s=S[a];
   if(a==='mt'&&s.slik!=='ok')return{ok:false,why:'Pengecekan SLIK OJK masih berjalan.'};
   if(!s.ran)return{ok:false,why:'DeepCheck belum dijalankan untuk nasabah ini.'};
-  if(s.decision==='tolak')return{ok:false,why:'Reviewer CoE tidak merekomendasikan pengajuan ini.'};
+  if(s.decision==='tolak')return{ok:false,why:'Reviewer tidak merekomendasikan pengajuan ini.'};
   if(s.decision==='lapangan')return{ok:false,why:'Reviewer meminta verifikasi lapangan terlebih dahulu.'};
-  if(risk==='tinggi'&&s.decision!=='lanjut')return{ok:false,why:s.review==='pending'?'Menunggu keputusan reviewer CoE.':'Risiko tinggi wajib dikirim untuk review.'};
+  if(risk==='tinggi'&&s.decision!=='lanjut')return{ok:false,why:s.review==='pending'?'Menunggu keputusan reviewer.':'Risiko tinggi wajib dikirim untuk review.'};
   if(risk==='verifikasi'&&!s.clarified&&s.decision!=='lanjut')return{ok:true,confirm:true};
   return{ok:true};
 }
@@ -333,7 +333,7 @@ function mtMain(){
   const ok=t=>`<div class="acc-s" style="background:#2EBF62">${t}${ic('check',12)}</div>`;
   const rows=a=>a.map(x=>`<div class="r"><span>${x}</span><span>Sesuai</span></div>`).join('');
   const dcStatus=!s.ran?(s.screen==='loading'?`<div class="acc-s" style="background:#1D5FE0">Pengecekan DeepCheck sedang dilakukan ${ic('clock',12,'class="spin"')}</div>`:`<div class="acc-s" style="background:#8A96A8">Belum dijalankan ${ic('clock',12)}</div>`):`<div class="acc-s" style="background:${s.decision==='lanjut'?'#2EBF62':R.col}">${s.decision==='lanjut'?'Tervalidasi – review lanjut proses':R.label+' • skor '+R.score}${ic(s.decision==='lanjut'||risk==='rendah'?'check':'alert',12)}</div>`;
-  const dcBody=`<div class="acc-c">${s.ran?`${R.f.map((f,i)=>`<div class="r"><span>${['Pemberitaan publik','Data perkara publik','Database internal PNM'][i]}</span><span style="color:${LC[f[0]]};font-weight:700">${f[1]}</span></div>`).join('')}<div class="r"><span>Status review</span><span>${s.review==='pending'?'Menunggu CoE':s.review==='done'?{lanjut:'Lanjut proses',lapangan:'Verifikasi lapangan',tolak:'Tidak direkomendasikan'}[s.decision]:'-'}</span></div><button class="mt-run" data-act="dc">Lihat hasil lengkap</button>`:`<div style="color:#5B6B85">Screening pemberitaan publik, perkara, regulator, dan database internal PNM.</div><button class="mt-run" data-act="dc" ${s.screen==='loading'?'disabled':''}>Jalankan DeepCheck</button>`}</div>`;
+  const dcBody=`<div class="acc-c">${s.ran?`${R.f.map((f,i)=>`<div class="r"><span>${['Pemberitaan publik','Data perkara publik','Database internal PNM'][i]}</span><span style="color:${LC[f[0]]};font-weight:700">${f[1]}</span></div>`).join('')}<div class="r"><span>Status review</span><span>${s.review==='pending'?'Menunggu Review':s.review==='done'?{lanjut:'Lanjut proses',lapangan:'Verifikasi lapangan',tolak:'Tidak direkomendasikan'}[s.decision]:'-'}</span></div><button class="mt-run" data-act="dc">Lihat hasil lengkap</button>`:`<div style="color:#5B6B85">Screening pemberitaan publik, perkara, regulator, dan database internal PNM.</div><button class="mt-run" data-act="dc" ${s.screen==='loading'?'disabled':''}>Jalankan DeepCheck</button>`}</div>`;
   return `<div class="mt-h">${ic('left',16)}<span>VERIFIKASI KREDIT</span>${ic('gear',18)}</div><div class="mt-body">
   ${acc('dukcapil','DUKCAPIL',ok('Tervalidasi'),`<div class="acc-c"><b>NASABAH</b>${rows(['Nomor Induk Kependudukan','Nama Lengkap','Tanggal Lahir'])}<b>PENJAMIN (NASABAH)</b>${rows(['Nomor Induk Kependudukan','Nama Lengkap','Tanggal Lahir'])}</div>`)}
   ${acc('ini','INI',ok('Tervalidasi'),`<div class="acc-c">NIK TIDAK TERDAFTAR DI PEMBIAYAAN APAPUN</div>`)}
@@ -365,7 +365,7 @@ function act(a,k){
   if(k==='dc'){if(s.ran){s.screen='result';log(a,A.name,'DeepCheck API',`<code>GET /v1/screening/${s.id}</code> membuka hasil tersimpan`);render(a)}else runDC(a)}
   else if(k==='back'){s.screen='main';render(a)}
   else if(k==='ev'){s.ev=!s.ev;if(s.ev)log(a,A.name,'DeepCheck API',`<code>GET /v1/screening/${s.id}/evidence</code> (akses tercatat di audit log)`);render(a)}
-  else if(k==='send'){s.review='pending';log(a,A.name,'DeepCheck API',`<code>POST /v1/screening/${s.id}/review</code> dikirim ke reviewer CoE`);ptoast(a,'Terkirim untuk review','Status akan diperbarui otomatis di '+A.name);renderRev();
+  else if(k==='send'){s.review='pending';log(a,A.name,'DeepCheck API',`<code>POST /v1/screening/${s.id}/review</code> dikirim ke reviewer`);ptoast(a,'Terkirim untuk review','Status akan diperbarui otomatis di '+A.name);renderRev();
     if(view!=='both'||innerWidth<1100)$('#revCard').scrollIntoView({behavior:'smooth',block:'center'})}
   else if(k==='foto-rumah'||k==='foto-ktp')openModal(`<h3>${k==='foto-rumah'?'Foto rumah':'Foto KTP penjamin'}</h3><div class="ph">${ic(k==='foto-rumah'?'file':'user',40)}</div><p>Gambar contoh untuk simulasi.</p><div class="acts"><button class="btn pri" onclick="closeModal()">Tutup</button></div>`)
   else if(k==='fp4')openModal(`<h3>FP4</h3><p>Formulir pengajuan pembiayaan ${A.nasabah}</p><div style="font-size:13px;display:grid;grid-template-columns:140px 1fr;gap:6px"><span style="color:var(--muted)">Jumlah pinjaman</span><b>Rp 2.000.000</b><span style="color:var(--muted)">Tenor</span><b>50 minggu</b><span style="color:var(--muted)">Usaha</span><b>Warung kelontong</b><span style="color:var(--muted)">Hasil DeepCheck</span><b>${s.ran?RK[risk].label+' ('+s.id+')':'Belum dijalankan'}</b></div><div class="acts"><button class="btn pri" onclick="closeModal()">Tutup</button></div>`)
